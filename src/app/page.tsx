@@ -1,9 +1,10 @@
-import WaveForm from "@/components/WaveForm";
+'use client'
+import AudioPlayer from "@/components/AudioPlayer"
 
 export default function Home() {
-    return (<div>
-        <h1 className="px-10">WaveForm</h1>
-        <h2>This is a test</h2>
-        <WaveForm src="/audio.mp3"></WaveForm>
-    </div>)
+    return (
+        <div>
+            <AudioPlayer src="/audio.mp3"></AudioPlayer>
+        </div>
+    )
 }
