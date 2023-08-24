@@ -12,11 +12,11 @@ import {
 import {
     PauseRounded,
     PlayArrowRounded,
-    SkipNextRounded,
-    SkipPreviousRounded,
-    VolumeDownRounded,
-    VolumeUpRounded
+    Forward5Rounded,
+    Replay5Rounded,
 } from "@mui/icons-material";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faBackwardStep, faBackwardFast, faForwardStep, faForwardFast} from "@fortawesome/free-solid-svg-icons";
 
 interface Iprops {
     src: string;
@@ -171,10 +171,20 @@ export default function AudioPlayer(props : Iprops) {
             <IconButton aria-label="step-backward"
                 onClick={
                     () => {
-                        waveformRef.current ?. skip(-3)
+                        waveformRef.current ?. skip(-5)
                     }
             }>
-                <SkipPreviousRounded></SkipPreviousRounded>
+                <Replay5Rounded></Replay5Rounded>
+            </IconButton>
+            <IconButton aria-label="slow-down"
+                onClick={
+                    () => {
+                        setPlaybackRate(playBackRate - 0.1 > 0.1 ? playBackRate - 0.1 : 0.1);
+                        waveformRef.current ?. setPlaybackRate(playBackRate)
+                    }
+            }>
+                {/* <FastRewindRounded></FastRewindRounded> */}
+                <FontAwesomeIcon icon={faBackwardStep} size="1x"/>
             </IconButton>
             <IconButton aria-label={
                     isPlaying ? 'play' : 'pause'
@@ -188,21 +198,31 @@ export default function AudioPlayer(props : Iprops) {
                 {
                 !isPlaying ? (
                     <PlayArrowRounded sx={
-                        {fontSize: '3rem'}
+                        {fontSize: '4rem'}
                     }></PlayArrowRounded>
                 ) : (
                     <PauseRounded sx={
-                        {fontSize: '3rem'}
+                        {fontSize: '4rem'}
                     }></PauseRounded>
                 )
             } </IconButton>
+            <IconButton aria-label="speed-up"
+                onClick={
+                    () => {
+                        const rate = playBackRate + 0.1 < 4 ? playBackRate + 0.1 : 4;
+                        setPlaybackRate(Number(rate.toFixed(1)));
+                        waveformRef.current ?. setPlaybackRate(playBackRate)
+                    }
+            }>
+                <FontAwesomeIcon icon={faForwardStep}/>
+            </IconButton>
             <IconButton aria-label="step-forward"
                 onClick={
                     () => {
-                        waveformRef.current ?. skip(3)
+                        waveformRef.current ?. skip(5)
                     }
             }>
-                <SkipNextRounded></SkipNextRounded>
+                <Forward5Rounded></Forward5Rounded>
             </IconButton>
         </Box>
         <Stack spacing={2}
@@ -214,19 +234,20 @@ export default function AudioPlayer(props : Iprops) {
                     px: 1
                 }
         }>
-            <VolumeDownRounded></VolumeDownRounded>
+            <FontAwesomeIcon icon={faBackwardFast} size="xl"/>
             <Slider aria-label="playback-speed" valueLabelDisplay="auto"
-                step={0.05}
+                step={0.1}
                 min={0.1}
                 max={3}
                 defaultValue={1}
+                value={playBackRate}
                 onChange={
                     (_, val) => {
                         setPlaybackRate(val as number);
                         waveformRef.current ?. setPlaybackRate(playBackRate);
                     }
             }></Slider>
-        <VolumeUpRounded></VolumeUpRounded>
+            <FontAwesomeIcon icon={faForwardFast} size="xl" />
 
     </Stack>
 </Box>
