@@ -9,14 +9,10 @@ import {
     Stack,
     Typography
 } from "@mui/material";
-import {
-    PauseRounded,
-    PlayArrowRounded,
-    Forward5Rounded,
-    Replay5Rounded,
-} from "@mui/icons-material";
+import {PauseRounded, PlayArrowRounded, Forward5Rounded, Replay5Rounded} from "@mui/icons-material";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faBackwardStep, faBackwardFast, faForwardStep, faForwardFast} from "@fortawesome/free-solid-svg-icons";
+import {randomColor, formatDuration} from "@/utils";
 
 interface Iprops {
     src: string;
@@ -33,24 +29,6 @@ export default function AudioPlayer(props : Iprops) {
     let regionsRef = useRef < RegionsPlugin > ();
     let activeRegionRef = useRef < Region > ();
 
-    const formatDuration = (value : number) => {
-        const minutes = Math.floor(value / 60);
-        const seconds = Math.floor(value % 60);
-        return `${minutes}:${
-            seconds < 10 ? '0' : ''
-        }${seconds}`;
-    }
-
-    const random = (min : number, max : number) => Math.random() * (max - min) + min;
-    const randomColor = (alpha : number) : string => {
-        return `rgba(${
-            random(0, 255)
-        }, ${
-            random(0, 255)
-        }, ${
-            random(0, 255)
-        }, ${alpha})`
-    }
 
     useEffect(() => {
         if (! waveSurferRef.current) 
@@ -60,8 +38,9 @@ export default function AudioPlayer(props : Iprops) {
 
         let waveSurfer = WaveSurfer.create({
             container: waveSurferRef.current,
+            height: 46,
             autoCenter: true,
-            barWidth: 2,
+            barHeight: 4,
             progressColor: "#8A2BE2",
             waveColor: "#E6E6FA",
             cursorColor: "#FFA500",
@@ -78,29 +57,39 @@ export default function AudioPlayer(props : Iprops) {
 
         waveSurfer.on('timeupdate', (time : number) => {
             time = Number.parseFloat(time.toFixed(1));
-            if (time !== currentTime) 
+            if (time !== currentTime) {
                 setCurrentTime(time)
+            }
         })
 
         waveSurfer.on('decode', () => {
             let regions = waveSurfer.registerPlugin(RegionsPlugin.create());
 
-            regions.enableDragSelection({color: randomColor(0.2)})
+            waveSurfer.on('interaction', (time) => {
+                activeRegionRef.current = undefined;
+
+                for (let region of regions.getRegions()) {
+                    if (time >= region.start && time <= region.end) {
+                        waveSurfer.setTime(time);
+                        activeRegionRef.current = region;
+                    }
+                }
+            })
+
+            regions.enableDragSelection({color: randomColor(0.5)})
             regions.on('region-in', (region) => {
                 activeRegionRef.current = region;
             })
-            regions.on("region-clicked", (region, _) => {
-                activeRegionRef.current = region;
+            regions.on("region-double-clicked", (region, _) => {
+                region.remove();
             })
             regions.on('region-out', (region) => {
                 if (activeRegionRef.current === region) {
-                    console.log('region-out and activeRegionRef.current === region');
                     region.play();
                 }
-                console.log('region-out');
             })
-            waveSurfer.on('interaction', () => {
-                activeRegionRef.current = undefined;
+            regions.on("region-created", (region) => {
+                region.setOptions({color: randomColor(0.15)})
             })
 
             regionsRef.current = regions;
@@ -111,11 +100,6 @@ export default function AudioPlayer(props : Iprops) {
             waveSurfer.destroy();
         };
     }, []);
-
-    function handleRegionRemove() {
-        activeRegionRef.current ?. remove();
-        activeRegionRef.current = undefined;
-    }
 
 
     return (
@@ -184,7 +168,8 @@ export default function AudioPlayer(props : Iprops) {
                     }
             }>
                 {/* <FastRewindRounded></FastRewindRounded> */}
-                <FontAwesomeIcon icon={faBackwardStep} size="1x"/>
+                <FontAwesomeIcon icon={faBackwardStep}
+                    size="1x"/>
             </IconButton>
             <IconButton aria-label={
                     isPlaying ? 'play' : 'pause'
@@ -234,7 +219,8 @@ export default function AudioPlayer(props : Iprops) {
                     px: 1
                 }
         }>
-            <FontAwesomeIcon icon={faBackwardFast} size="xl"/>
+            <FontAwesomeIcon icon={faBackwardFast}
+                size="xl"/>
             <Slider aria-label="playback-speed" valueLabelDisplay="auto"
                 step={0.1}
                 min={0.1}
@@ -247,7 +233,8 @@ export default function AudioPlayer(props : Iprops) {
                         waveformRef.current ?. setPlaybackRate(playBackRate);
                     }
             }></Slider>
-            <FontAwesomeIcon icon={faForwardFast} size="xl" />
+        <FontAwesomeIcon icon={faForwardFast}
+            size="xl"/>
 
     </Stack>
 </Box>
