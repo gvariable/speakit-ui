@@ -10,7 +10,13 @@ import {
     Typography,
     IconButton
 } from "@mui/material";
-import {PlayCircleRounded, PauseCircleRounded, TextFieldsRounded} from '@mui/icons-material';
+import {
+    PlayCircleRounded,
+    PauseCircleRounded,
+    TextFieldsRounded,
+    FavoriteRounded,
+    MoreRounded
+} from '@mui/icons-material';
 import {randomColor, formatDuration} from "@/utils";
 
 interface IMessageBoxProps {
@@ -195,15 +201,54 @@ export default function MessageBox(props : IMessageBoxProps) {
                 </Stack>
 
             </Stack>
-            <ToggleButton value='showText'
-                selected={showText}
-                onChange={
-                    () => {
-                        setShowText(!showText)
-                    }
-            }>
-                <TextFieldsRounded></TextFieldsRounded>
-            </ToggleButton>
+            <Stack direction='row' display='flex' justifyContent='flex-end'
+                spacing={29}>
+                <Stack direction='row' display='flex' justifyContent='flex-end' spacing={1}>
+                    <IconButton aria-label="favorite" size="small" 
+                        sx={
+                            {
+                                width: "20px",
+                                height: "20px",
+                            }
+                    }>
+                        <FavoriteRounded></FavoriteRounded>
+                    </IconButton>
+                    <ToggleButton value='showText'
+                        selected={showText}
+                        onChange={
+                            () => {
+                                setShowText(!showText)
+                            }
+                        }
+                        size="small"
+                        sx={
+                            {
+                                width: "20px",
+                                height: "20px",
+                                p: 1
+                            }
+                    }>
+                        <TextFieldsRounded sx={
+                            {
+                                width: "15px",
+                                height: "15px"
+                            }
+                        }></TextFieldsRounded>
+                    </ToggleButton>
+                </Stack>
+
+                <IconButton aria-label="more" size="small"
+                    sx={
+                        {
+                            width: "20px",
+                            height: "20px",
+                            p: 1
+                        }
+                }>
+                    <MoreRounded></MoreRounded>
+                </IconButton>
+
+            </Stack>
             {
             showText ? <Typography>Hello World</Typography> : ''
         } </Box>
