@@ -8,7 +8,9 @@ import {
     ToggleButton,
     Stack,
     Typography,
-    IconButton
+    IconButton,
+    Grid,
+    Collapse
 } from "@mui/material";
 import {
     PlayCircleRounded,
@@ -18,19 +20,30 @@ import {
     MoreRounded
 } from '@mui/icons-material';
 import {randomColor, formatDuration} from "@/utils";
+import {useTheme} from "@mui/material";
 
 interface IMessageBoxProps {
     audio: string;
     text?: string | undefined;
     height: number;
+    width?: number;
 }
+
 
 export default function MessageBox(props : IMessageBoxProps) {
     const {audio, text, height} = props;
+    let {width} = props;
+    if (!width) {
+        width = 200;
+    }
+
+    const [showTextEnabled, setShowTextEnabled] = useState < boolean > (true);
     const [showText, setShowText] = useState < boolean > (false);
     const [isPlaying, setIsPlaying] = useState < boolean > (false);
     const [currentTime, setCurrentTime] = useState(0);
+    const [favorite, setFavorite] = useState < boolean > (false);
 
+    let theme = useTheme();
     let waveSurferRef = useRef(null);
     let waveformRef = useRef < WaveSurfer > ();
     let regionsRef = useRef < RegionsPlugin > ();
@@ -45,12 +58,12 @@ export default function MessageBox(props : IMessageBoxProps) {
 
         let waveSurfer = WaveSurfer.create({
             container: waveSurferRef.current,
-            height: height - 2,
+            height: height - 5,
             autoCenter: true,
             barHeight: 3,
-            progressColor: "#8A2BE2",
-            waveColor: "#E6E6FA",
-            cursorColor: "#FFA500",
+            progressColor: theme.palette.primary.light,
+            waveColor: theme.palette.secondary.main,
+            cursorColor: theme.palette.primary.dark,
             minPxPerSec: 100,
             autoScroll: true,
             hideScrollbar: true
@@ -102,6 +115,13 @@ export default function MessageBox(props : IMessageBoxProps) {
             regionsRef.current = regions;
         })
 
+        // waveSurfer.once('play', () => {
+        //     const durationMs = waveSurfer.getDuration() * 1000;
+        //     setTimeout(() => {
+        //         setShowTextEnabled(true);
+        //     }, durationMs > 3000 ? 3000 : durationMs);
+        // })
+
         return() => {
             regionsRef.current ?. destroy();
             waveSurfer.destroy();
@@ -112,16 +132,15 @@ export default function MessageBox(props : IMessageBoxProps) {
         <>
             <Box sx={
                 {
-                    width: 320,
+                    width: width,
                     p: 1,
                     borderRadius: 3,
-                    border: 2
+                    backgroundColor: theme.palette.background.default
                 }
             }>
                 <Box ref={waveSurferRef}
                     sx={
                         {
-                            width: 300,
                             height: height,
                             borderRadius: height / 2,
                             border: 2,
@@ -129,91 +148,105 @@ export default function MessageBox(props : IMessageBoxProps) {
                             px: 2
                         }
                 }></Box>
-                <Stack display="flex" alignItems='baseline' direction='row'
-                    spacing={0.8}
+                <Grid container
+                    spacing={1}
+                    display='flex'
                     sx={
                         {
-                            width: 300,
-                            alignmentBaseline: 'central',
-                            px: 1
+                            px: 1,
+                            mt: -1.5
                         }
                 }>
-                    <IconButton aria-label={
-                            isPlaying ? 'play' : 'pause'
-                        }
+                    <Grid item>
+                        <IconButton aria-label={
+                                isPlaying ? 'play' : 'pause'
+                            }
+                            onClick={
+                                () => {
+                                    waveformRef.current ?. playPause();
+                                    setIsPlaying(!isPlaying);
+                                }
+                            }
+                            size="small">
+                            {
+                            !isPlaying ? <PlayCircleRounded></PlayCircleRounded> : <PauseCircleRounded></PauseCircleRounded>
+                        } </IconButton>
+                    </Grid>
+                    <Grid item>
+                        <Stack sx={
+                            {
+                                display: 'flex',
+                                width: width - 80
+                            }
+                        }>
+                            <Slider aria-label="time-indicator" size="small"
+                                min={0}
+                                step={0.1}
+                                max={
+                                    waveformRef.current ?. getDuration()
+                                }
+                                value={currentTime}
+                                onChange={
+                                    (_, val) => {
+                                        waveformRef.current ?. setTime(val as number)
+                                        setCurrentTime(val as number)
+                                    }
+                                }
+                                sx={
+                                    {color: theme.palette.primary.light}
+                            }></Slider>
+                        <Box sx={
+                            {
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mt: -1.2
+                            }
+                        }>
+                            <Typography sx={
+                                {
+                                    fontSize: '0.5rem',
+                                    opacity: 0.5
+                                }
+                            }>
+                                {
+                                formatDuration(currentTime)
+                            }</Typography>
+                            <Typography sx={
+                                {
+                                    fontSize: '0.5rem',
+                                    opacity: 0.5
+                                }
+                            }>
+                                {
+                                waveformRef.current ?. getDuration() ? '-' + formatDuration(waveformRef.current ?. getDuration() - currentTime) : '0:00'
+                            }</Typography>
+                        </Box>
+                    </Stack>
+                </Grid>
+            </Grid>
+            <Stack direction='row' display='flex' alignItems='center' justifyContent='space-between'
+                sx={
+                    {mt: -1}
+            }>
+                <Stack direction='row' display='flex' alignItems='center'
+                    spacing={0.3}>
+                    <IconButton aria-label="favorite" size="small"
                         onClick={
                             () => {
-                                waveformRef.current ?. playPause();
-                                setIsPlaying(!isPlaying);
-                            }
-                        }
-                        size="small">
-                        {
-                        !isPlaying ? <PlayCircleRounded></PlayCircleRounded> : <PauseCircleRounded></PauseCircleRounded>
-                    } </IconButton>
-                    <Stack sx={
-                        {
-                            display: 'flex',
-                            width: 230
-                        }
-                    }>
-                        <Slider aria-label="time-indicator" size="small"
-                            min={0}
-                            step={0.1}
-                            max={
-                                waveformRef.current ?. getDuration()
-                            }
-                            value={currentTime}
-                            onChange={
-                                (_, val) => {
-                                    waveformRef.current ?. setTime(val as number)
-                                    setCurrentTime(val as number)
-                                }
-                        }></Slider>
-                    <Box sx={
-                        {
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mt: -1,
-                            width: 230
-                        }
-                    }>
-                        <Typography sx={
-                            {
-                                fontSize: '0.7rem',
-                                opacity: 0.5
-                            }
-                        }>
-                            {
-                            formatDuration(currentTime)
-                        }</Typography>
-                        <Typography sx={
-                            {
-                                fontSize: '0.7rem',
-                                opacity: 0.5
-                            }
-                        }>
-                            {
-                            waveformRef.current ?. getDuration() ? '-' + formatDuration(waveformRef.current ?. getDuration() - currentTime) : '0:00'
-                        }</Typography>
-                    </Box>
-                </Stack>
-
-            </Stack>
-            <Stack direction='row' display='flex' justifyContent='flex-end'
-                spacing={29}>
-                <Stack direction='row' display='flex' justifyContent='flex-end' spacing={1}>
-                    <IconButton aria-label="favorite" size="small" 
-                        sx={
-                            {
-                                width: "20px",
-                                height: "20px",
+                                setFavorite(!favorite)
                             }
                     }>
-                        <FavoriteRounded></FavoriteRounded>
+                        <FavoriteRounded sx={
+                            {
+                                color: favorite ? 'red' : 'gray'
+                            }
+                        }></FavoriteRounded>
                     </IconButton>
                     <ToggleButton value='showText'
+                        disabled={
+                            !showTextEnabled
+                        }
                         selected={showText}
                         onChange={
                             () => {
@@ -223,15 +256,16 @@ export default function MessageBox(props : IMessageBoxProps) {
                         size="small"
                         sx={
                             {
-                                width: "20px",
-                                height: "20px",
-                                p: 1
+                                width: "15px",
+                                height: "15px",
+                                px: 1
                             }
                     }>
                         <TextFieldsRounded sx={
                             {
-                                width: "15px",
-                                height: "15px"
+                                width: "-1rem",
+                                height: "-1rem",
+                                fontWeight: 'bold'
                             }
                         }></TextFieldsRounded>
                     </ToggleButton>
@@ -242,16 +276,19 @@ export default function MessageBox(props : IMessageBoxProps) {
                         {
                             width: "20px",
                             height: "20px",
-                            p: 1
+                            justifyContent: 'right'
                         }
                 }>
                     <MoreRounded></MoreRounded>
                 </IconButton>
 
             </Stack>
-            {
-            showText ? <Typography>Hello World</Typography> : ''
-        } </Box>
+
+            <Collapse in={showText}
+                unmountOnExit>
+                <Typography> {text}</Typography>
+            </Collapse>
+        </Box>
     </>
     )
 }
