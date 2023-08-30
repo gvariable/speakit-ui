@@ -49,16 +49,15 @@ export default function InputBox() {
     function start() {
         stop();
         setRecordingStatus("recording");
-        recordRef.current ?. startRecording().then((e) => {
-            alert(e)
-        });
+        recordRef.current ?. startRecording();
+        recordRef.current ?. startMic();
     }
 
     function stop() {
         if (recordingStatus === "recording") {
             setRecordingStatus("inactive");
             recordRef.current ?. stopRecording();
-            // record.stopMic();
+            recordRef.current ?. stopMic();
         }
     }
 
@@ -68,7 +67,7 @@ export default function InputBox() {
             setBlob(undefined);
             setBlobUrl(undefined);
             recordRef.current ?. stopRecording();
-            // record.stopMic();
+            recordRef.current ?. stopMic();
         }
     }
 
