@@ -3,9 +3,20 @@ import {useEffect, useRef, useState} from "react";
 import RecordPlugin from "wavesurfer.js/dist/plugins/record.js";
 import {Box, Button} from "@mui/material";
 
-type RecordingStatus = "recording" | "inactive" | "paused";
+type RecordingStatus = "recording" | "inactive" | "cancelled";
 
-export default function InputBox() {
+interface IProps {
+    height: number;
+    width?: number;
+}
+
+export default function InputBox(props : IProps) {
+    const {height} = props;
+    let {width} = props;
+    if (!width) {
+        width = height * 6;
+    }
+
     const [blob, setBlob] = useState < Blob > ();
     const [blobUrl, setBlobUrl] = useState < string > ();
     const [recordingStatus, setRecordingStatus] = useState < RecordingStatus > ("inactive");
@@ -20,7 +31,13 @@ export default function InputBox() {
             return;
         }
 
-        const waveSurfer = WaveSurfer.create({container: waveSurferRef.current});
+        const waveSurfer = WaveSurfer.create({
+            container: waveSurferRef.current,
+            height: height * 0.9,
+            autoCenter: true,
+            minPxPerSec: 200,
+            hideScrollbar: true
+        });
         const record = waveSurfer.registerPlugin(RecordPlugin.create({mimeType: "audio/webm"}));
 
         record.on('record-start', () => {
@@ -31,10 +48,9 @@ export default function InputBox() {
         });
         record.on('record-end', (blob) => {
             const url = URL.createObjectURL(blob);
-
             setBlob(blob);
             setBlobUrl(url);
-            setRecordingStatus("inactive");
+            console.log(url);
         });
 
         waveformRef.current = waveSurfer;
@@ -63,9 +79,7 @@ export default function InputBox() {
 
     function cancel() {
         if (recordingStatus === "recording") {
-            setRecordingStatus("paused");
-            setBlob(undefined);
-            setBlobUrl(undefined);
+            setRecordingStatus("cancelled");
             recordRef.current ?. stopRecording();
             recordRef.current ?. stopMic();
         }
@@ -76,26 +90,37 @@ export default function InputBox() {
             <Box ref={waveSurferRef}
                 sx={
                     {
-                        width: 500,
-                        height: 100,
-                        border: "1px solid black"
+                        width: width,
+                        height: height,
+                        border: "1px solid black",
+                        alignItems: 'center'
                     }
-            }>
+            }></Box>
+            <Box sx={
                 {
-                recordingStatus === "recording" ? <Box>
-                    <Button onClick={cancel}>Cancel</Button>
-                    <Button onClick={stop}>Stop</Button>
-                </Box> : <Button onClick={start}>Start</Button>
-            } </Box>
+                    display: "flex",
+                    width: width,
+                    height: height,
+                    border: "1px solid black",
+                    alignItems: 'space-between'
+                }
+            }>
+                <Button onClick={start}
+                    disabled={
+                        recordingStatus === "recording"
+                }>Start</Button>
+                <Button onClick={stop}
+                    disabled={
+                        recordingStatus !== "recording"
+                }>Stop</Button>
+                <Button onClick={cancel}
+                    disabled={
+                        recordingStatus !== "recording"
+                }>Cancel</Button>
+            </Box>
             {
-            (recordingStatus !== "recording" && blobUrl) ? <audio src={blobUrl}
+            (recordingStatus === "inactive" && blobUrl) ? <audio src={blobUrl}
                 controls/> : null
-        }
-            <div id='waveform'></div>
-            <p>{blobUrl}</p>
-            <p>{
-                blob ?. size
-            }</p>
-        </>
+        } </>
     )
 }

@@ -34,7 +34,7 @@ export default function MessageBox(props : IMessageBoxProps) {
     const {audio, text, height} = props;
     let {width} = props;
     if (!width) {
-        width = 200;
+        width = height * 6;
     }
 
     const [showTextEnabled, setShowTextEnabled] = useState < boolean > (true);
@@ -58,7 +58,7 @@ export default function MessageBox(props : IMessageBoxProps) {
 
         let waveSurfer = WaveSurfer.create({
             container: waveSurferRef.current,
-            height: height - 5,
+            height: height * 0.9,
             autoCenter: true,
             barHeight: 3,
             progressColor: theme.palette.primary.light,
