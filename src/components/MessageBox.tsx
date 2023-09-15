@@ -1,7 +1,7 @@
-import {useState, useRef, useEffect} from "react";
+import { useState, useRef, useEffect } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
-import {Region} from "wavesurfer.js/dist/plugins/regions.js";
+import { Region } from "wavesurfer.js/dist/plugins/regions.js";
 import {
     Box,
     Slider,
@@ -10,19 +10,22 @@ import {
     Typography,
     IconButton,
     Grid,
-    Collapse
+    Collapse,
+    Avatar
 } from "@mui/material";
 import {
     PlayCircleRounded,
     PauseCircleRounded,
     TextFieldsRounded,
     FavoriteRounded,
-    MoreRounded
+    MoreRounded,
+    Message
 } from '@mui/icons-material';
-import {randomColor, formatDuration} from "@/utils";
-import {useTheme} from "@mui/material";
+import { randomColor, formatDuration } from "@/utils";
+import { useTheme } from "@mui/material";
 
 interface IMessageBoxProps {
+    avatar: string;
     audio: string;
     text?: string | undefined;
     height: number;
@@ -30,30 +33,30 @@ interface IMessageBoxProps {
 }
 
 
-export default function MessageBox(props : IMessageBoxProps) {
-    const {audio, text, height} = props;
-    let {width} = props;
+function MessageBox(props: IMessageBoxProps) {
+    const { avatar, audio, text, height } = props;
+    let { width } = props;
     if (!width) {
         width = height * 6;
     }
 
-    const [showTextEnabled, setShowTextEnabled] = useState < boolean > (true);
-    const [showText, setShowText] = useState < boolean > (false);
-    const [isPlaying, setIsPlaying] = useState < boolean > (false);
+    const [showTextEnabled, setShowTextEnabled] = useState<boolean>(true);
+    const [showText, setShowText] = useState<boolean>(false);
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [currentTime, setCurrentTime] = useState(0);
-    const [favorite, setFavorite] = useState < boolean > (false);
+    const [favorite, setFavorite] = useState<boolean>(false);
 
     let theme = useTheme();
     let waveSurferRef = useRef(null);
-    let waveformRef = useRef < WaveSurfer > ();
-    let regionsRef = useRef < RegionsPlugin > ();
-    let activeRegionRef = useRef < Region > ();
+    let waveformRef = useRef<WaveSurfer>();
+    let regionsRef = useRef<RegionsPlugin>();
+    let activeRegionRef = useRef<Region>();
 
 
     useEffect(() => {
-        if (! waveSurferRef.current) 
+        if (!waveSurferRef.current)
             return;
-        
+
 
 
         let waveSurfer = WaveSurfer.create({
@@ -75,7 +78,7 @@ export default function MessageBox(props : IMessageBoxProps) {
             waveformRef.current = waveSurfer;
         })
 
-        waveSurfer.on('timeupdate', (time : number) => {
+        waveSurfer.on('timeupdate', (time: number) => {
             time = Number.parseFloat(time.toFixed(1));
             if (time !== currentTime) {
                 setCurrentTime(time)
@@ -96,7 +99,7 @@ export default function MessageBox(props : IMessageBoxProps) {
                 }
             })
 
-            regions.enableDragSelection({color: randomColor(0.5)})
+            regions.enableDragSelection({ color: randomColor(0.5) })
             regions.on('region-in', (region) => {
                 activeRegionRef.current = region;
             })
@@ -109,186 +112,205 @@ export default function MessageBox(props : IMessageBoxProps) {
                 }
             })
             regions.on("region-created", (region) => {
-                region.setOptions({color: randomColor(0.15)})
+                region.setOptions({ color: randomColor(0.15) })
             })
 
             regionsRef.current = regions;
         })
 
-        // waveSurfer.once('play', () => {
-        //     const durationMs = waveSurfer.getDuration() * 1000;
-        //     setTimeout(() => {
-        //         setShowTextEnabled(true);
-        //     }, durationMs > 3000 ? 3000 : durationMs);
-        // })
 
-        return() => {
-            regionsRef.current ?. destroy();
+        return () => {
+            regionsRef.current?.destroy();
             waveSurfer.destroy();
         };
     }, []);
 
     return (
         <>
-            <Box sx={
-                {
-                    width: width,
-                    p: 1,
-                    borderRadius: 3,
-                    backgroundColor: theme.palette.background.default
-                }
-            }>
-                <Box ref={waveSurferRef}
-                    sx={
-                        {
-                            height: height,
-                            borderRadius: height / 2,
-                            border: 2,
-                            alignItems: 'center',
-                            px: 2
-                        }
-                }></Box>
-                <Grid container
-                    spacing={1}
-                    display='flex'
-                    sx={
-                        {
-                            px: 1,
-                            mt: -1.5
-                        }
+            <Stack direction="row" sx={ {
+                p: 1,
+                backgroundColor: theme.palette.background.default,
+                width: width,
+                alignItems: "flex-start"
+            } }
+                spacing={ 1 }>
+                <Avatar src={ avatar } sx={ {
+                    width: height,
+                    height: height
+                } } />
+                <Box sx={
+                    {
+                        width: width,
+                        borderRadius: 3,
+                    }
                 }>
-                    <Grid item>
-                        <IconButton aria-label={
-                                isPlaying ? 'play' : 'pause'
-                            }
-                            onClick={
-                                () => {
-                                    waveformRef.current ?. playPause();
-                                    setIsPlaying(!isPlaying);
-                                }
-                            }
-                            size="small">
-                            {
-                            !isPlaying ? <PlayCircleRounded></PlayCircleRounded> : <PauseCircleRounded></PauseCircleRounded>
-                        } </IconButton>
-                    </Grid>
-                    <Grid item>
-                        <Stack sx={
-                            {
-                                display: 'flex',
-                                width: width - 80
-                            }
-                        }>
-                            <Slider aria-label="time-indicator" size="small"
-                                min={0}
-                                step={0.1}
-                                max={
-                                    waveformRef.current ?. getDuration()
-                                }
-                                value={currentTime}
-                                onChange={
-                                    (_, val) => {
-                                        waveformRef.current ?. setTime(val as number)
-                                        setCurrentTime(val as number)
-                                    }
-                                }
-                                sx={
-                                    {color: theme.palette.primary.light}
-                            }></Slider>
-                        <Box sx={
-                            {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                mt: -1.2
-                            }
-                        }>
-                            <Typography sx={
-                                {
-                                    fontSize: '0.5rem',
-                                    opacity: 0.5
-                                }
-                            }>
-                                {
-                                formatDuration(currentTime)
-                            }</Typography>
-                            <Typography sx={
-                                {
-                                    fontSize: '0.5rem',
-                                    opacity: 0.5
-                                }
-                            }>
-                                {
-                                waveformRef.current ?. getDuration() ? '-' + formatDuration(waveformRef.current ?. getDuration() - currentTime) : '0:00'
-                            }</Typography>
-                        </Box>
-                    </Stack>
-                </Grid>
-            </Grid>
-            <Stack direction='row' display='flex' alignItems='center' justifyContent='space-between'
-                sx={
-                    {mt: -1}
-            }>
-                <Stack direction='row' display='flex' alignItems='center'
-                    spacing={0.3}>
-                    <IconButton aria-label="favorite" size="small"
-                        onClick={
-                            () => {
-                                setFavorite(!favorite)
-                            }
-                    }>
-                        <FavoriteRounded sx={
-                            {
-                                color: favorite ? 'red' : 'gray'
-                            }
-                        }></FavoriteRounded>
-                    </IconButton>
-                    <ToggleButton value='showText'
-                        disabled={
-                            !showTextEnabled
-                        }
-                        selected={showText}
-                        onChange={
-                            () => {
-                                setShowText(!showText)
-                            }
-                        }
-                        size="small"
+                    <Box ref={ waveSurferRef }
                         sx={
                             {
-                                width: "15px",
-                                height: "15px",
-                                px: 1
+                                height: height,
+                                borderRadius: height / 2,
+                                border: 2,
+                                alignItems: 'center',
+                                px: 2
                             }
-                    }>
-                        <TextFieldsRounded sx={
+                        }></Box>
+                    <Grid container
+                        spacing={ 1 }
+                        display='flex'
+                        sx={
                             {
-                                width: "-1rem",
-                                height: "-1rem",
-                                fontWeight: 'bold'
+                                px: 1,
+                                mt: -1.5
                             }
-                        }></TextFieldsRounded>
-                    </ToggleButton>
-                </Stack>
+                        }>
+                        <Grid item>
+                            <IconButton aria-label={
+                                isPlaying ? 'play' : 'pause'
+                            }
+                                onClick={
+                                    () => {
+                                        waveformRef.current?.playPause();
+                                        setIsPlaying(!isPlaying);
+                                    }
+                                }
+                                size="small">
+                                {
+                                    !isPlaying ? <PlayCircleRounded></PlayCircleRounded> : <PauseCircleRounded></PauseCircleRounded>
+                                } </IconButton>
+                        </Grid>
+                        <Grid item>
+                            <Stack sx={
+                                {
+                                    display: 'flex',
+                                    width: width - 80
+                                }
+                            }>
+                                <Slider aria-label="time-indicator" size="small"
+                                    min={ 0 }
+                                    step={ 0.1 }
+                                    max={
+                                        waveformRef.current?.getDuration()
+                                    }
+                                    value={ currentTime }
+                                    onChange={
+                                        (_, val) => {
+                                            waveformRef.current?.setTime(val as number)
+                                            setCurrentTime(val as number)
+                                        }
+                                    }
+                                    sx={
+                                        { color: theme.palette.primary.light }
+                                    }></Slider>
+                                <Box sx={
+                                    {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        mt: -1.2
+                                    }
+                                }>
+                                    <Typography sx={
+                                        {
+                                            fontSize: '0.5rem',
+                                            opacity: 0.5
+                                        }
+                                    }>
+                                        {
+                                            formatDuration(currentTime)
+                                        }</Typography>
+                                    <Typography sx={
+                                        {
+                                            fontSize: '0.5rem',
+                                            opacity: 0.5
+                                        }
+                                    }>
+                                        {
+                                            waveformRef.current?.getDuration() ? '-' + formatDuration(waveformRef.current?.getDuration() - currentTime) : '0:00'
+                                        }</Typography>
+                                </Box>
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                    <Stack direction='row' display='flex' alignItems='center' justifyContent='space-between'
+                        sx={
+                            { mt: -1 }
+                        }>
+                        <Stack direction='row' display='flex' alignItems='center'
+                            spacing={ 0.3 }>
+                            <IconButton aria-label="favorite" size="small"
+                                onClick={
+                                    () => {
+                                        setFavorite(!favorite)
+                                    }
+                                }>
+                                <FavoriteRounded sx={
+                                    {
+                                        color: favorite ? 'red' : 'gray'
+                                    }
+                                }></FavoriteRounded>
+                            </IconButton>
+                            <ToggleButton value='showText'
+                                disabled={
+                                    !showTextEnabled
+                                }
+                                selected={ showText }
+                                onChange={
+                                    () => {
+                                        setShowText(!showText)
+                                    }
+                                }
+                                size="small"
+                                sx={
+                                    {
+                                        width: "15px",
+                                        height: "15px",
+                                        px: 1
+                                    }
+                                }>
+                                <TextFieldsRounded sx={
+                                    {
+                                        width: "-1rem",
+                                        height: "-1rem",
+                                        fontWeight: 'bold'
+                                    }
+                                }></TextFieldsRounded>
+                            </ToggleButton>
+                        </Stack>
 
-                <IconButton aria-label="more" size="small"
-                    sx={
-                        {
-                            width: "20px",
-                            height: "20px",
-                            justifyContent: 'right'
-                        }
-                }>
-                    <MoreRounded></MoreRounded>
-                </IconButton>
+                        <IconButton aria-label="more" size="small"
+                            sx={
+                                {
+                                    width: "20px",
+                                    height: "20px",
+                                    justifyContent: 'right'
+                                }
+                            }>
+                            <MoreRounded></MoreRounded>
+                        </IconButton>
 
+                    </Stack>
+
+                    <Collapse in={ showText }
+                        unmountOnExit>
+                        <Typography> { text }</Typography>
+                    </Collapse>
+                </Box>
             </Stack>
 
-            <Collapse in={showText}
-                unmountOnExit>
-                <Typography> {text}</Typography>
-            </Collapse>
-        </Box>
-    </>
+        </>
     )
 }
+
+async function Chat(prompt: string) {
+
+}
+
+export default function ChatBox(props: IMessageBoxProps) {
+    return (
+        <>
+            <MessageBox { ...props }></MessageBox>
+        </>
+    )
+}
+
+
